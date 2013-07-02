@@ -1,0 +1,12 @@
+{application, redis_node, [
+    {description, "Redis node discovery."},
+    {vsn, "0.0.1"},
+    {modules, []},
+    {registered, []},
+    {applications, [
+        kernel,
+        stdlib
+    ]},
+    {mod, {redis_node_app, []}},
+    {env, []}
+]}.
