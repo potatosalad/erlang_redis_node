@@ -1,4 +1,4 @@
-Erland Redis Node Discovery
+Erlang Redis Node Discovery
 ===========================
 
 [![Build Status](https://travis-ci.org/potatosalad/erlang_redis_node.png?branch=master)](https://travis-ci.org/potatosalad/erlang_redis_node)
