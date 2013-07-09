@@ -130,12 +130,21 @@ handle_info({'$redis_node_reply', {Node, Ref}, Reply}, State=#state{waiting=Wait
 handle_info({'DOWN', Monitor, process, Pid, _Reason}, State=#state{monitor=Monitor, pid=Pid}) ->
     timer:sleep(?RECONNECT_SLEEP),
     {stop, normal, State};
-handle_info({'DOWN', Monitor, process, _From, _Reason}, State=#state{waiting=Waiting}) ->
+handle_info(Info={'DOWN', Monitor, process, _From, _Reason}, State=#state{waiting=Waiting, handler=Handler, h_state=HandlerState}) ->
     case lists:keytake(Monitor, 3, Waiting) of
         {value, _, Waiting2} ->
             {noreply, State#state{waiting=Waiting2}};
         false ->
-            {noreply, State}
+            case catch Handler:redis_node_info(Info, HandlerState) of
+                {noreply, HandlerState2} ->
+                    {noreply, State#state{h_state=HandlerState2}};
+                {noreply, HandlerState2, Timeout} ->
+                    {noreply, State#state{h_state=HandlerState2}, Timeout};
+                {stop, Reason, HandlerState2} ->
+                    {stop, Reason, State#state{h_state=HandlerState2}};
+                Other ->
+                    Other
+            end
     end;
 handle_info(Info, State=#state{handler=Handler, h_state=HandlerState}) ->
     case catch Handler:redis_node_info(Info, HandlerState) of

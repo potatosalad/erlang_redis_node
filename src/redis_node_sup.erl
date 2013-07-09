@@ -30,8 +30,19 @@ start_link() ->
 %%%===================================================================
 
 init([]) ->
+    Config = case application:get_env(redis_node, groups) of
+        {ok, C} ->
+            C;
+        undefined ->
+            []
+    end,
+    ChildSpecs = [begin
+        redis_node:child_spec(Group, RedisOpts, Handler, HandlerOpts)
+    end || {Group, RedisOpts, Handler, HandlerOpts} <- Config],
     redis_node_server = ets:new(redis_node_server, [ordered_set, public, named_table]),
     {ok, {{one_for_one, 5, 10}, [
         ?CHILD(redis_node_server, worker),
         ?CHILD(redis_node_call_fsm_sup, supervisor)
+        | ChildSpecs
     ]}}.
+
