@@ -6,7 +6,7 @@
 %%% @end
 %%% Created :   26 Jun 2013 by Andrew Bennett <andrew@pagodabox.com>
 %%%-------------------------------------------------------------------
--module(redis_node_sup).
+-module(redis_node_call_fsm_sup).
 -behaviour(supervisor).
 
 %% API
@@ -14,9 +14,6 @@
 
 %% Supervisor callbacks
 -export([init/1]).
-
-%% Helper macro for declaring children of supervisor
--define(CHILD(I, Type), {I, {I, start_link, []}, permanent, 5000, Type, [I]}).
 
 %%%===================================================================
 %%% API functions
@@ -30,8 +27,7 @@ start_link() ->
 %%%===================================================================
 
 init([]) ->
-    redis_node_server = ets:new(redis_node_server, [ordered_set, public, named_table]),
-    {ok, {{one_for_one, 5, 10}, [
-        ?CHILD(redis_node_server, worker),
-        ?CHILD(redis_node_call_fsm_sup, supervisor)
-    ]}}.
+    CallFSM = {undefined,
+        {redis_node_call_fsm, start_link, []},
+        temporary, infinity, worker, [redis_node_call_fsm]},
+    {ok, {{simple_one_for_one, 5, 10}, [CallFSM]}}.
